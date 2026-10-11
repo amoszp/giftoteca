@@ -10,8 +10,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['apple-touch-icon.png'],
       manifest: {
-        name: 'Regalis',
-        short_name: 'Regalis',
+        name: 'Giftoteca',
+        short_name: 'Giftoteca',
         description: 'Ideas de regalos por persona y ocasión',
         theme_color: '#121214',
         background_color: '#121214',

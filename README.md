@@ -1,6 +1,6 @@
 # Giftoteca 🎁
 
-A personal **Progressive Web App (PWA)** for organizing gift ideas by person and occasion.
+A **Progressive Web App (PWA)** for organizing gift ideas by person and occasion.
 
 Giftoteca provides a simple way to keep track of birthdays, Christmas gifts, and general gift ideas, including purchase status and reference links.
 
@@ -160,9 +160,21 @@ Preview the production build locally:
 npm run preview
 ```
 
+## 🐳 Deployment
+
+A multi-stage `Dockerfile` builds the app with Node and serves `dist/` with Nginx (`nginx.conf` adds the client-side routing fallback and keeps the service worker uncached, so installed copies pick up new releases).
+
+Every push to `master` builds the image with GitHub Actions and publishes it to GitHub Container Registry. `docker-compose.yml` runs that prebuilt image:
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+The app is then served on port `1107` (change the left side of `ports` to use another). Pair it with a container auto-updater such as Watchtower to pick up new images automatically.
+
 ## 🗺️ Roadmap
 
-- [ ] Production deployment
 - [ ] Permanent PWA installation
 - [ ] Data backup/export
 - [ ] Optional cross-device synchronization

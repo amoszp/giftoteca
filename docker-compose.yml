@@ -1,0 +1,7 @@
+services:
+  giftoteca:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-amoszp}/giftoteca:${GIFTOTECA_TAG:-latest}
+    container_name: giftoteca
+    restart: unless-stopped
+    ports:
+      - "1107:80"

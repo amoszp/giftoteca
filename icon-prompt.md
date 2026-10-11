@@ -1,10 +1,10 @@
-# Prompt para el icono de Regalis
+# Prompt para el icono de Giftoteca
 
 Pega el bloque de abajo (en inglés, para mejor resultado en la mayoría de generadores) en tu herramienta de imágenes.
 
 ---
 
-Premium minimalist app icon design, flat vector illustration style, for a gift-tracking mobile app called "Regalis". Square 1:1 composition, designed to sit inside an iOS rounded-square (squircle) icon mask, generous padding, centered composition, no text, no watermark, no logo type.
+Premium minimalist app icon design, flat vector illustration style, for a gift-tracking mobile app called "Giftoteca". Square 1:1 composition, designed to sit inside an iOS rounded-square (squircle) icon mask, generous padding, centered composition, no text, no watermark, no logo type.
 
 Solid flat background color #741A2F (deep burgundy), no gradients, no texture, no noise.
 

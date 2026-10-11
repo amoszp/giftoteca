@@ -1,6 +1,6 @@
 import Dexie from 'dexie'
 
-export const db = new Dexie('regalis')
+export const db = new Dexie('giftoteca')
 
 db.version(1).stores({
   people: '++id, name, birthday',

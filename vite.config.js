@@ -13,8 +13,8 @@ export default defineConfig({
         name: 'Giftoteca',
         short_name: 'Giftoteca',
         description: 'Ideas de regalos por persona y ocasión',
-        theme_color: '#121214',
-        background_color: '#121214',
+        theme_color: '#0b0e1c',
+        background_color: '#0b0e1c',
         display: 'standalone',
         start_url: '/',
         icons: [

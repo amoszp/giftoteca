@@ -1,70 +1,80 @@
-import { useLiveQuery } from 'dexie-react-hooks'
 import { Link } from 'react-router-dom'
-import { PartyPopper, ChevronRight, Gift, Search } from 'lucide-react'
-import { db, OCCASIONS, daysUntilNextBirthday, formatShortDate } from '../db'
+import { daysText, nextOccurrence } from '../db'
+import { progress, stateOf } from '../lib/useData'
+import { Chev, DateTile, ocStyle } from '../components/ui'
 
-export default function Home() {
-  const people = useLiveQuery(() => db.people.orderBy('name').toArray(), []) || []
-  const gifts = useLiveQuery(
-    () => db.gifts.where('occasion').equals(OCCASIONS.CUMPLEANOS).toArray(),
-    []
-  ) || []
+export default function Home({ data }) {
+  const { people, gifts, active, prefs, occ } = data
+  if (!people.length) {
+    return <p className="empty">Añade a alguien en Personas para empezar.</p>
+  }
 
-  const upcoming = people
-    .map((person) => ({ person, next: daysUntilNextBirthday(person.birthday) }))
-    .filter((row) => row.next)
-    .sort((a, b) => a.next.days - b.next.days)
+  const shared = active
+    .filter((o) => !o.fixed)
+    .map((o) => ({ kind: 'o', o, ...nextOccurrence(o) }))
+    .filter((e) => e.date)
+  const cumple = occ('cumpleanos')
+  const bdays = people
+    .map((p) => ({ kind: 'p', p, o: cumple, ...(nextOccurrence(cumple, p) || {}) }))
+    .filter((e) => e.date)
+  shared.sort((a, b) => a.days - b.days)
+  const hero = shared[0]
+  const rest = [...shared.slice(1), ...bdays].sort((a, b) => a.days - b.days)
+  const daysCls = (n) => (n === 0 ? 'today' : n <= prefs.soon ? 'soon' : '')
 
   return (
-    <div className="page">
-      <header className="page-header">
-        <h1 className="occasion-title">
-          <span className="occasion-icon home-icon"><PartyPopper size={22} strokeWidth={2} /></span> Próximamente
-        </h1>
-        <Link to="/buscar" className="occasion-icon" aria-label="Buscar">
-          <Search size={20} strokeWidth={2} />
-        </Link>
-      </header>
-
-      {upcoming.length === 0 && (
-        <p className="empty-state">
-          Añade la fecha de cumpleaños de alguien en Ajustes para verlo aquí.
-        </p>
+    <>
+      {hero && <Countdown hero={hero} people={people} gifts={gifts} />}
+      {rest.length > 0 && (
+        <>
+          <p className="label">Próximas fechas</p>
+          <ul className="list">
+            {rest.map((e) => {
+              const to = e.kind === 'p' ? `/personas/${e.p.id}?occ=cumpleanos` : `/ideas?occ=${e.o.k}`
+              const list = e.kind === 'p' ? gifts.filter((g) => g.personId === e.p.id && g.occasion === 'cumpleanos') : gifts.filter((g) => g.occasion === e.o.k)
+              return (
+                <li key={e.kind + (e.p?.id ?? e.o.k)}>
+                  <Link className="row" to={to} state={{ from: 'Inicio' }}>
+                    <DateTile date={e.date} o={e.o} />
+                    <span className="grow">
+                      <span className="name">{e.kind === 'p' ? e.p.name : e.o.label}</span>
+                      <span className="sub">{e.kind === 'p' ? `Cumpleaños · ${progress(list)}` : progress(list)}</span>
+                    </span>
+                    <span className={'days ' + daysCls(e.days)}>{daysText(e.days)}</span>
+                    <Chev />
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+        </>
       )}
+    </>
+  )
+}
 
-      <ul className="upcoming-list">
-        {upcoming.map(({ person, next }, i) => {
-          const personGifts = gifts.filter((g) => g.personId === person.id)
-          const bought = personGifts.filter((g) => g.bought).length
-          const urgency = next.days <= 7 ? 'soon' : next.days <= 30 ? 'near' : 'far'
-          return (
-            <li key={person.id} style={{ animationDelay: `${i * 50}ms` }}>
-              <Link
-                to={`/persona/${person.id}/${OCCASIONS.CUMPLEANOS}`}
-                className={`upcoming-card urgency-${urgency}`}
-              >
-                <span className="upcoming-avatar">{person.name.charAt(0).toUpperCase()}</span>
-                <div className="upcoming-body">
-                  <div className="upcoming-main">
-                    <span className="upcoming-name">{person.name}</span>
-                    <span className="upcoming-date">{formatShortDate(next.date)}</span>
-                  </div>
-                  <div className="upcoming-meta">
-                    <span className="upcoming-days">
-                      {next.days === 0 ? 'Hoy' : next.days === 1 ? 'Mañana' : `En ${next.days} días`}
-                    </span>
-                    <span className="upcoming-progress">
-                      <Gift size={13} />
-                      {personGifts.length === 0 ? 'Sin ideas todavía' : `${bought}/${personGifts.length} comprados`}
-                    </span>
-                  </div>
-                </div>
-                <ChevronRight size={18} className="upcoming-chevron" />
-              </Link>
-            </li>
-          )
-        })}
-      </ul>
-    </div>
+function Countdown({ hero, people, gifts }) {
+  const states = people.map((p) => ({ p, s: stateOf(gifts, p.id, hero.o.k) }))
+  const pending = states.filter((x) => x.s !== 'ok')
+  return (
+    <section className="count" style={ocStyle(hero.o)} aria-label={hero.o.label}>
+      <h1 className="count-n">
+        <b>{hero.days}</b>
+        <span>
+          {hero.days === 1 ? 'día' : 'días'} para {hero.o.label}
+        </span>
+      </h1>
+      <p className="count-t">{pending.length ? `Falta regalo para ${pending.length} de ${states.length}` : 'Todos tienen regalo'}</p>
+      {pending.length > 0 && (
+        <div className="pchips">
+          {pending.map(({ p, s }) => (
+            <Link key={p.id} className="pchip" to={`/personas/${p.id}?occ=${hero.o.k}`} state={{ from: 'Inicio' }}>
+              <span className={'st ' + s} aria-hidden="true" />
+              {p.name}
+            </Link>
+          ))}
+        </div>
+      )}
+    </section>
   )
 }

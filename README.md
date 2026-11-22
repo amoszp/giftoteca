@@ -1,162 +1,75 @@
 # Giftoteca 🎁
 
-A **Progressive Web App (PWA)** for organizing gift ideas by person and occasion.
-
-Giftoteca provides a simple way to keep track of birthdays, Christmas gifts, and general gift ideas, including purchase status and reference links.
+A **Progressive Web App (PWA)** for keeping gift ideas organized by person and occasion, with everything stored on your own device.
 
 ## ✨ Features
 
-- 🎂 **Upcoming birthdays** — birthdays sorted by proximity.
-- 🎁 **Gift ideas by person** — keep ideas organized for each person.
-- 🎄 **Occasions** — categorize gifts as:
-  - Birthday
-  - Christmas
-  - General idea
-- ✅ **Purchase tracking** — mark gifts as purchased without hiding or striking them out.
-- 🔗 **Reference links** — optionally attach a URL to each gift idea.
-- 👤 **People management** — create, edit, and delete people and their birthdays.
+- ⏳ **Countdown home** — days until the next shared occasion and who still needs a gift, followed by every upcoming date (birthdays included).
+- 👤 **People** — each person has two tabs:
+  - **Ideas**, grouped by occasion, with a bought toggle.
+  - **Details** — name and birthday, sizes (shirt, trousers, shoes plus any custom size), likes, things to avoid, things they already have, notes, past gifts.
+- 🔀 **Move ideas between occasions** — from an idea's card or while editing it, with undo.
+- 📷 **Photos** — take a photo or pick one from the library; it is resized before saving.
+- 🖼️ **Ideas gallery** — every idea as a photo grid, filtered by status and occasion.
+- 🗓️ **Occasions** — Birthday, Christmas and "No occasion" are always on. Epiphany (Reyes), Mother's Day and Father's Day can be switched on, and you can add your own yearly dates.
+- 🕰️ **Past gifts** — the day after an occasion, bought ideas move to the person's past gifts with the year.
+- ↩️ **Undo** — moving, deleting an idea, deleting a person and clearing all data can be undone from the notice.
+- 🌗 **Light and dark themes** — follows the system or a fixed choice.
+- 💾 **Backup** — export everything (photos included) to a JSON file and import it back.
 - 📱 **PWA** — installable on iOS and other supported devices.
-- 💾 **Local-first storage** — data is stored locally using IndexedDB.
-- ✏️ **Full CRUD** — create, edit, and delete people and gifts.
 
 ## 🛠️ Tech Stack
 
 - [React](https://react.dev/)
 - [Vite](https://vite.dev/)
 - [React Router](https://reactrouter.com/)
-- [Dexie](https://dexie.org/)
-- [dexie-react-hooks](https://github.com/dexie/Dexie.js)
+- [Dexie](https://dexie.org/) and [dexie-react-hooks](https://github.com/dexie/Dexie.js)
 - [vite-plugin-pwa](https://vite-pwa-org.netlify.app/)
 - [Lucide React](https://lucide.dev/)
 
 ## 🎨 Design
 
-Giftoteca uses a **Liquid Glass** visual style focused on a clean, tactile mobile experience.
-
-- Translucent glass surfaces with backdrop blur
-- Ambient animated background
-- Subtle interaction and press feedback
-- Animated glass-style checkboxes
-- Consistent spacing, typography, radii, and icon sizing
-- Touch targets designed around a minimum **44px** interaction area
-
-Purchased gifts remain fully visible and are identified with a **Purchased** label instead of being crossed out.
+- One accent colour, a fixed spacing scale (4/8 px), three icon sizes and 44 px touch targets.
+- Each occasion has its own colour, chosen to stay distinguishable for colour-blind users in both themes.
+- Icons are only used for actions, never as decoration.
+- A 78 px bottom navigation fixed to the screen edge.
+- Destructive actions are red, separated at the end of each screen, and undoable.
 
 ## 🗃️ Data Model
+
+IndexedDB through Dexie (schema version 2).
 
 ### `people`
 
 ```js
-{
-  id,
-  name,
-  birthday
-}
+{ id, name, birthday, about: { sizes: [{ k, v, custom? }], likes: [], avoid: [], has: [], notes } }
 ```
 
-`birthday` is stored as `YYYY-MM-DD`. The year is not used when calculating upcoming birthdays, making birthdays recurring annually.
+`birthday` is `YYYY-MM-DD`; only month and day are used, so birthdays repeat every year.
 
 ### `gifts`
 
 ```js
-{
-  id,
-  personId,
-  occasion,
-  title,
-  link,
-  bought,
-  createdAt
-}
+{ id, personId, occasion, title, link, photo, bought, boughtAt, givenYear, createdAt }
 ```
 
-`occasion` can be:
+- `occasion` — `cumpleanos`, `navidad`, `reyes`, `madre`, `padre`, `sin` or a custom occasion key.
+- `photo` — a JPEG data URL (max 1200 px) or `null`.
+- `givenYear` — set when a bought idea moves to past gifts.
 
-```text
-cumpleanos
-navidad
-idea
-```
+### `settings`
 
-## 📱 Screens
+Key/value rows: `occasions` (which optional occasions are on, plus custom ones) and `prefs` (theme, how many days ahead a date is highlighted).
 
-### Home
-
-Shows upcoming birthdays ordered by proximity, including:
-
-- Person avatar
-- Days remaining
-- Urgency indicator
-- Gift purchase progress
-
-### Birthdays
-
-Browse people and view their birthday gift ideas.
-
-### Christmas
-
-Browse people and view their Christmas gift ideas.
-
-### Ideas
-
-View all gift ideas grouped by person and separated into:
-
-- Birthday
-- Christmas
-- General ideas
-
-### Settings
-
-Manage people and their birthday information.
-
-## 💾 Storage
-
-Giftoteca uses **IndexedDB** through Dexie for local data persistence.
-
-There is currently:
-
-- No backend
-- No authentication
-- No cloud database
-- No cross-device synchronization
-
-This keeps the application simple and privacy-friendly, with data remaining on the user's device.
-
-> **Note:** Because data is stored locally, clearing the browser/site storage can remove Giftoteca's data. A backup/synchronization solution may be added in the future.
+Upgrading from version 1 converts the old `idea` occasion to `sin` and adds the new fields.
 
 ## 🚀 Development
 
-Install dependencies:
-
 ```bash
 npm install
-```
-
-Start the development server:
-
-```bash
-npm run dev
-```
-
-To access the development version from another device on the same network:
-
-```bash
-npm run dev -- --host
-```
-
-Then open the displayed local network URL from the other device.
-
-## 📦 Production Build
-
-Create a production build with:
-
-```bash
+npm run dev            # or: npm run dev -- --host  (to open it from another device)
+npm run lint
 npm run build
-```
-
-Preview the production build locally:
-
-```bash
 npm run preview
 ```
 
@@ -171,14 +84,15 @@ docker compose pull
 docker compose up -d
 ```
 
-The app is then served on port `1107` (change the left side of `ports` to use another). Pair it with a container auto-updater such as Watchtower to pick up new images automatically.
+The app is served on port `1107` (change the left side of `ports` to use another). Pair it with a container auto-updater such as Watchtower to pick up new images automatically.
+
+## 💾 Storage
+
+There is no backend, no account and no sync: data stays on the device. Clearing the browser's site data removes it, so use **Ajustes → Exportar copia** now and then.
 
 ## 🗺️ Roadmap
 
-- [ ] Permanent PWA installation
-- [ ] Data backup/export
 - [ ] Optional cross-device synchronization
-- [ ] Additional gift organization features
 
 ## 📄 License
 

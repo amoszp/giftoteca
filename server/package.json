@@ -1,0 +1,18 @@
+{
+  "name": "giftoteca-server",
+  "version": "1.0.0",
+  "description": "Giftoteca server: serves the app and syncs each account's data (Express + SQLite)",
+  "private": true,
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "node --test tests/*.test.js"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

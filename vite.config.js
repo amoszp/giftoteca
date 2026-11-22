@@ -8,6 +8,8 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      // The API must always reach the server, never the cached app shell.
+      workbox: { navigateFallbackDenylist: [/^\/api\//] },
       includeAssets: ['apple-touch-icon.png'],
       manifest: {
         name: 'Giftoteca',

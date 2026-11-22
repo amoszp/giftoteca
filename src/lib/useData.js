@@ -11,10 +11,12 @@ export function useData() {
   const prefsStored = useLiveQuery(() => getSetting('prefs', DEFAULT_PREFS), [])
   const ready = people !== undefined && gifts !== undefined && occStored !== undefined && prefsStored !== undefined
   const occasions = mergeOccasions(occStored)
-  const all = gifts || []
+  const live = (people || []).filter((p) => !p.deleted).sort(byName)
+  const liveIds = new Set(live.map((p) => p.id))
+  const all = (gifts || []).filter((g) => !g.deleted && liveIds.has(g.personId))
   return {
     ready,
-    people: (people || []).slice().sort(byName),
+    people: live,
     gifts: all.filter((g) => !g.givenYear),
     past: all.filter((g) => g.givenYear),
     occasions,

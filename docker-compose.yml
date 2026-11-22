@@ -4,4 +4,29 @@ services:
     container_name: giftoteca
     restart: unless-stopped
     ports:
-      - "1107:80"
+      - "1107:3000"
+    environment:
+      - TZ=${TZ:-Atlantic/Canary}
+      # Sign-in through the shared accounts service (see server/auth.js).
+      # The token lives in .env next to this file, never in the repo.
+      - ACCOUNTS_URL=${ACCOUNTS_URL:-http://accounts:4600}
+      - ACCOUNTS_SERVICE_TOKEN=${ACCOUNTS_SERVICE_TOKEN:?set ACCOUNTS_SERVICE_TOKEN in .env}
+      - COOKIE_SECURE=${COOKIE_SECURE:-true}
+    networks:
+      - default
+      - accounts
+    volumes:
+      # SQLite database in ./data/giftoteca.db on the host -> survives container updates.
+      - ./data:/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    mem_limit: 256m
+
+networks:
+  accounts:
+    # Created by the accounts service's compose file.
+    external: true

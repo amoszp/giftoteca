@@ -1,16 +1,37 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ChevronRight, Download, Minus, Plus, Trash2, Upload } from 'lucide-react'
 import { deleteAllData, exportData, importData, longDate, nextOccurrence, setOccasionOn, setSetting } from '../db'
 import { Seg, Sheet, Switch, ocStyle } from '../components/ui'
 import { OccasionForm } from '../components/PersonSheets'
 import { useToast } from '../components/Toast'
+import { getAccount, signOut } from '../lib/account'
+import { syncNow } from '../lib/sync'
+import { statusText, useSyncStatus } from '../lib/useSyncStatus'
 
-export default function Settings({ data }) {
+export default function Settings({ data, auth, onSignIn, onSignedOut }) {
   const toast = useToast()
   const { prefs, occasions, gifts } = data
   const [sheet, setSheet] = useState(null) // { type: 'occ', occasion } | { type: 'import', payload }
   const fileRef = useRef(null)
   const setPrefs = (changes) => setSetting('prefs', { ...prefs, ...changes })
+  const sync = useSyncStatus()
+  const [account, setAccount] = useState(null)
+  const [leaving, setLeaving] = useState(false)
+  useEffect(() => {
+    getAccount().then(setAccount)
+  }, [auth])
+
+  async function doSignOut() {
+    setLeaving(true)
+    try {
+      await signOut()
+      onSignedOut()
+    } catch (err) {
+      toast(err.message)
+    } finally {
+      setLeaving(false)
+    }
+  }
 
   async function toggle(o, on) {
     await setOccasionOn(o.k, on)
@@ -135,6 +156,43 @@ export default function Settings({ data }) {
         </li>
       </ul>
 
+      <p className="label">Cuenta</p>
+      {auth === 'in' && account ? (
+        <ul className="list">
+          <li className="set-row">
+            <span className={'sync-dot ' + sync.state} aria-hidden="true" />
+            <span className="grow">
+              <span className="name sm">{account.displayName || account.username}</span>
+              <span className="sub">{statusText(sync)}</span>
+            </span>
+            <button type="button" className="btn btn-sec" disabled={sync.state === 'syncing'} onClick={() => syncNow()}>
+              Sincronizar
+            </button>
+          </li>
+          <li>
+            <button type="button" className="row" disabled={leaving} onClick={doSignOut}>
+              <span className="grow">
+                <span className="name sm">Cerrar sesión</span>
+                <span className="sub">Sube lo pendiente y quita los datos de este dispositivo</span>
+              </span>
+              <ChevronRight className="chev" />
+            </button>
+          </li>
+        </ul>
+      ) : (
+        <ul className="list">
+          <li>
+            <button type="button" className="row add-row" onClick={onSignIn}>
+              <span className="grow">
+                <span className="name sm">Iniciar sesión</span>
+                <span className="sub" style={{ color: 'var(--text-dim)' }}>Guarda tus ideas en tu cuenta</span>
+              </span>
+              <ChevronRight className="chev" />
+            </button>
+          </li>
+        </ul>
+      )}
+
       <p className="label">Copia de seguridad</p>
       <ul className="list">
         <li>
@@ -157,7 +215,7 @@ export default function Settings({ data }) {
         </li>
       </ul>
       <input ref={fileRef} className="hidden-file" type="file" accept="application/json,.json" tabIndex={-1} aria-hidden="true" onChange={pickImport} />
-      <p className="note">Tus personas, ideas y fotos solo están en este dispositivo.</p>
+      <p className="note">{auth === 'in' ? 'Tus ideas están en tu cuenta y en este dispositivo.' : 'Tus personas, ideas y fotos solo están en este dispositivo.'}</p>
 
       <div className="danger-zone">
         <button type="button" className="btn btn-danger btn-block" onClick={wipe}>

@@ -86,6 +86,10 @@
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body, #root { height: 100%; margin: 0; }
+/* iOS standalone: the root is short by the top inset on pages that don't scroll, which moves the fixed tab bar.
+   Pad the root by that inset and use vh (svh leaves the safe areas out in standalone), so every screen
+   lays out like a long one and the tab bar keeps one size. */
+html { min-height: calc(100% + env(safe-area-inset-top)); }
 html, body { overscroll-behavior: none; }
 body { background: var(--bg); touch-action: manipulation; }
 input, button, select, textarea { font: inherit; color: inherit; }
@@ -95,9 +99,9 @@ svg.lucide { flex: none; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 
 /* ---------- shell ---------- */
-.app-shell { position: relative; min-height: 100svh; max-width: 560px; margin: 0 auto; }
+.app-shell { position: relative; min-height: 100vh; max-width: 560px; margin: 0 auto; }
 .page {
-  min-height: 100svh;
+  min-height: 100vh;
   padding: calc(var(--s4) + env(safe-area-inset-top)) var(--s4) calc(var(--nav-h) + var(--s6));
   display: flex; flex-direction: column; gap: var(--s4);
 }
@@ -181,6 +185,24 @@ input[type='number'] { appearance: textfield; -moz-appearance: textfield; }
 .btn-danger { background: var(--danger-tint); color: var(--danger); }
 .btn-block { width: 100%; }
 .sticky-cta { position: sticky; bottom: calc(var(--nav-h) + 12px); margin-top: auto; box-shadow: var(--shadow); }
+/* Floating add button: bottom right, just above the tab bar. */
+.fab { position: fixed; z-index: 21; bottom: calc(var(--nav-h) + var(--s4)); right: max(var(--s4), calc((100vw - 560px) / 2 + var(--s4))); width: 56px; height: 56px; border-radius: 50%; border: 0; background: var(--accent-fill); color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow); transition: transform .08s; }
+.fab:active { transform: scale(.92); }
+.fab svg { width: 26px; height: 26px; }
+.fab-space { flex: none; height: 56px; }
+
+/* Occasion filter: one quiet control that opens a sheet. */
+.filter-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); margin-bottom: calc(-1 * var(--s2)); }
+.filter-count { font-size: var(--fs-sm); color: var(--text-dim); font-variant-numeric: tabular-nums; padding-left: var(--s1); }
+.filter-btn { min-height: var(--btn); display: inline-flex; align-items: center; gap: 8px; padding: 0 10px 0 14px; border: 0; border-radius: var(--r-sm); background: var(--surface); color: var(--text); font-size: var(--fs-sm); font-weight: 600; transition: transform .08s; }
+.filter-btn:active { transform: scale(.97); }
+.filter-btn svg { width: 18px; height: 18px; color: var(--text-dim); }
+.row.opt { min-height: 52px; }
+.opt-ic { width: 20px; height: 20px; color: var(--text-dim); }
+.row.opt .odot.big { margin: 0 5px; }
+.opt-n { flex: none; font-size: var(--fs-sm); color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.opt-check { width: 20px; height: 20px; color: var(--accent); visibility: hidden; }
+.row.opt[aria-checked='true'] .opt-check { visibility: visible; }
 .back { align-self: flex-start; display: inline-flex; align-items: center; gap: 2px; min-height: var(--btn); padding: 0 8px 0 0; margin: -8px 0 -8px -6px; background: none; border: 0; color: var(--accent); font-size: var(--fs-title); }
 .back svg { width: 24px; height: 24px; }
 .danger-zone { border-top: 1px solid var(--line); padding-top: var(--s4); margin-top: var(--s2); }

@@ -72,7 +72,7 @@ export default function Ideas({ data }) {
           data={data}
           onClose={() => setSheet(null)}
           onEdit={() => setSheet({ type: 'form', id: open.id, initial: { ...open } })}
-          onOpenPerson={() => navigate(`/personas/${open.personId}?occ=${open.occasion}`, { state: { from: 'Ideas' } })}
+          onOpenPerson={() => navigate(`/personas/${open.personId}`,{ state: { from: 'Ideas' } })}
         />
       )}
       {sheet?.type === 'form' && <IdeaForm initial={sheet.initial} person={person(sheet.initial.personId)} data={data} onClose={() => setSheet(null)} />}

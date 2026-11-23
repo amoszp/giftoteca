@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ChevronLeft, Link2, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Check, ChevronDown, ChevronLeft, Link2, ListFilter, Pencil, Plus, Trash2 } from 'lucide-react'
 import { aboutOf, daysText, deletePerson, longDate, nextOccurrence, setBought } from '../db'
 import { domain } from '../lib/useData'
-import { Chev, OccChip, Seg, Thumb, Tick } from '../components/ui'
+import { Chev, Seg, Sheet, Thumb, Tick, ocStyle } from '../components/ui'
 import { IdeaForm, IdeaSheet } from '../components/IdeaSheets'
 import { AboutForm, PersonForm } from '../components/PersonSheets'
 import { useToast } from '../components/Toast'
@@ -23,7 +23,7 @@ export default function Person({ data }) {
 
   const tab = params.get('tab') === 'detalles' ? 'detalles' : 'ideas'
   const occParam = params.get('occ')
-  const occK = data.active.some((o) => o.k === occParam) ? occParam : 'cumpleanos'
+  const occK = data.active.some((o) => o.k === occParam) ? occParam : 'all'
   const ideaParam = Number(params.get('idea')) || null
   const from = location.state?.from || 'Personas'
 
@@ -34,13 +34,17 @@ export default function Person({ data }) {
   }
   const goBack = () => (location.key !== 'default' ? navigate(-1) : navigate('/personas'))
 
-  const mine = data.gifts.filter((g) => g.personId === personId)
-  const list = mine.filter((g) => g.occasion === occK).sort((a, b) => a.bought - b.bought || a.createdAt - b.createdAt)
+  const all = data.gifts.filter((g) => g.personId === personId)
+  // The list and filter only cover active occasions, as on the Ideas tab.
+  const mine = all.filter((g) => data.active.some((o) => o.k === g.occasion))
+  // Bought ideas first, then the rest; each group oldest first.
+  const list = mine.filter((g) => occK === 'all' || g.occasion === occK).sort((a, b) => b.bought - a.bought || a.createdAt - b.createdAt)
+  const newOcc = occK !== 'all' ? occK : data.active.some((o) => o.k === 'cumpleanos') ? 'cumpleanos' : data.active[0]?.k
   const bday = person.birthday ? nextOccurrence(data.occ('cumpleanos'), person) : null
 
   // An idea opened from search arrives as ?idea=ID.
   const openIdea = sheet?.type === 'idea' ? sheet.id : ideaParam
-  const openGift = openIdea ? mine.find((g) => g.id === openIdea) : null
+  const openGift = openIdea ? all.find((g) => g.id === openIdea) : null
   const closeIdea = () => {
     setSheet(null)
     if (ideaParam) update({ idea: null })
@@ -71,11 +75,16 @@ export default function Person({ data }) {
 
       {tab === 'ideas' ? (
         <>
-          <div className="chips" role="group" aria-label="Ocasión">
-            {data.active.map((o) => (
-              <OccChip key={o.k} o={o} pressed={occK === o.k} count={mine.filter((g) => g.occasion === o.k).length} onClick={() => update({ occ: o.k })} />
-            ))}
-          </div>
+          {mine.length > 0 && (
+            <div className="filter-bar">
+              <span className="filter-count">{list.length === 1 ? '1 idea' : `${list.length} ideas`}</span>
+              <button type="button" className="filter-btn" style={occK === 'all' ? undefined : ocStyle(data.occ(occK))} aria-haspopup="dialog" onClick={() => setSheet({ type: 'filter' })}>
+                {occK === 'all' ? <ListFilter aria-hidden="true" /> : <span className="odot" aria-hidden="true" />}
+                <span>{occK === 'all' ? 'Todas las ocasiones' : data.occ(occK).label}</span>
+                <ChevronDown aria-hidden="true" />
+              </button>
+            </div>
+          )}
           {list.length ? (
             <ul className="list">
               {list.map((g) => (
@@ -86,6 +95,12 @@ export default function Person({ data }) {
                       <span className="idea-title">{g.title}</span>
                       <span className="idea-meta">
                         {g.bought && <span className="tag-ok">Comprada</span>}
+                        {occK === 'all' && data.occ(g.occasion) && (
+                          <span className="inline" style={ocStyle(data.occ(g.occasion))}>
+                            <span className="odot" aria-hidden="true" />
+                            {data.occ(g.occasion).label}
+                          </span>
+                        )}
                         {g.link && (
                           <span className="inline">
                             <Link2 aria-hidden="true" />
@@ -100,16 +115,19 @@ export default function Person({ data }) {
               ))}
             </ul>
           ) : (
-            <p className="empty">Todavía no hay ideas en {data.occ(occK).label}.</p>
+            <p className="empty">{occK === 'all' ? `Todavía no hay ideas para ${person.name}.` : `Todavía no hay ideas en ${data.occ(occK).label}.`}</p>
           )}
-          <button
-            type="button"
-            className="btn btn-primary btn-block sticky-cta"
-            onClick={() => setSheet({ type: 'form', initial: { id: null, personId, occasion: occK, title: '', link: '', photo: null } })}
-          >
-            <Plus />
-            Añadir idea
-          </button>
+          {newOcc && <div className="fab-space" aria-hidden="true" />}
+          {newOcc && (
+            <button
+              type="button"
+              className="fab"
+              aria-label="Añadir idea"
+              onClick={() => setSheet({ type: 'form', initial: { id: null, personId, occasion: newOcc, title: '', link: '', photo: null } })}
+            >
+              <Plus strokeWidth={2.25} />
+            </button>
+          )}
         </>
       ) : (
         <Details person={person} past={data.past.filter((g) => g.personId === personId)} occ={data.occ} onEdit={(focus) => setSheet({ type: 'about', focus })} onEditPerson={() => setSheet({ type: 'person' })} onDelete={removePerson} />
@@ -125,7 +143,39 @@ export default function Person({ data }) {
         />
       )}
       {sheet?.type === 'form' && (
-        <IdeaForm initial={sheet.initial} person={person} data={data} onClose={() => setSheet(null)} onSaved={(k) => k !== occK && update({ occ: k })} />
+        <IdeaForm initial={sheet.initial} person={person} data={data} onClose={() => setSheet(null)} onSaved={(k) => occK !== 'all' && k !== occK && update({ occ: k })} />
+      )}
+      {sheet?.type === 'filter' && (
+        <Sheet title="Filtrar por ocasión" onClose={() => setSheet(null)}>
+          <ul className="list" role="radiogroup" aria-label="Ocasión">
+            {[{ k: 'all', label: 'Todas las ocasiones' }, ...data.active].map((o) => {
+              const n = o.k === 'all' ? mine.length : mine.filter((g) => g.occasion === o.k).length
+              const on = occK === o.k
+              return (
+                <li key={o.k}>
+                  <button
+                    type="button"
+                    className="row opt"
+                    role="radio"
+                    aria-checked={on}
+                    style={o.k === 'all' ? undefined : ocStyle(o)}
+                    onClick={() => {
+                      update({ occ: o.k === 'all' ? null : o.k })
+                      setSheet(null)
+                    }}
+                  >
+                    {o.k === 'all' ? <ListFilter className="opt-ic" aria-hidden="true" /> : <span className="odot big" aria-hidden="true" />}
+                    <span className="grow">
+                      <span className="name sm">{o.label}</span>
+                    </span>
+                    <span className="opt-n">{n}</span>
+                    <Check className="opt-check" aria-hidden="true" />
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        </Sheet>
       )}
       {sheet?.type === 'about' && <AboutForm person={person} focus={sheet.focus} onClose={() => setSheet(null)} />}
       {sheet?.type === 'person' && <PersonForm person={person} onClose={() => setSheet(null)} />}

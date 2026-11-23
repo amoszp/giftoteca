@@ -6,7 +6,7 @@ A **Progressive Web App (PWA)** for keeping gift ideas organized by person and o
 
 - ⏳ **Countdown home** — days until the next shared occasion and who still needs a gift, followed by every upcoming date (birthdays included).
 - 👤 **People** — each person has two tabs:
-  - **Ideas**, grouped by occasion, with a bought toggle.
+  - **Ideas**, all of them at first with bought ones on top, filterable by occasion, with a bought toggle and a floating add button.
   - **Details** — name and birthday, sizes (shirt, trousers, shoes plus any custom size), likes, things to avoid, things they already have, notes, past gifts.
 - 🔀 **Move ideas between occasions** — from an idea's card or while editing it, with undo.
 - 📷 **Photos** — take a photo or pick one from the library; it is resized before saving.

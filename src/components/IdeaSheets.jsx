@@ -136,8 +136,8 @@ export function IdeaForm({ initial, person, data, onClose, onSaved }) {
       await updateGift(d.id, { title, link: d.link.trim(), photo: d.photo, occasion: d.occasion })
       toast(initial.occasion !== d.occasion ? `Guardada en ${data.occ(d.occasion).label}` : 'Cambios guardados')
     } else {
+      // No confirmation: the new idea appears in the list, and a message would cover the "+" for the next one.
       await addGift({ personId: d.personId, occasion: d.occasion, title, link: d.link.trim(), photo: d.photo })
-      toast('Idea añadida')
     }
     onSaved?.(d.occasion)
     onClose()
